@@ -34,6 +34,12 @@ export function useAuth() {
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/v1/auth/google`;
   };
 
+  const loginWithEmail = async (email: string, password: string) => {
+    await api.post(apiEndpoints.auth.login, { email, password });
+    await checkAuth();
+  };
+
+
   const logout = async () => {
     try {
       await api.post(apiEndpoints.auth.logout);
@@ -47,6 +53,7 @@ export function useAuth() {
   return {
     ...state,
     login,
+    loginWithEmail,
     logout,
     checkAuth,
   };

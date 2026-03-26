@@ -1,12 +1,17 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading, login } = useAuth();
+  const { isAuthenticated, isLoading, login, loginWithEmail } = useAuth();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
@@ -14,21 +19,45 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  const handleLogin = () => {
+  const handleGoogleLogin = () => {
     login();
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+    
+    setIsSubmitting(true);
+    setError('');
+    
+    try {
+      if (loginWithEmail) {
+        await loginWithEmail(email, password);
+      } else {
+        setError('El inicio de sesión con correo no está configurado');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error al iniciar sesión');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center gradient-radial-primary">
+      <div className="min-h-screen flex items-center justify-center gradient-radial-primary bg-background">
         <div className="animate-pulse text-primary text-lg">Cargando...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center gradient-radial-primary">
-      <div className="glass-surface rounded-2xl p-8 md:p-12 max-w-md w-full mx-4">
+    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-primary/10 blur-[120px] rounded-full mix-blend-screen pointer-events-none" />
+      <div className="absolute bottom-[-20%] left-[-10%] w-[50%] h-[50%] bg-secondary/10 blur-[120px] rounded-full mix-blend-screen pointer-events-none" />
+
+      <div className="glass-surface rounded-2xl p-8 md:p-12 max-w-md w-full mx-4 relative z-10 border border-white/5 shadow-2xl">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             StreamFlow
@@ -39,9 +68,57 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-6">
+          {error && (
+            <div className="p-3 text-sm text-red-400 bg-red-900/20 border border-red-500/20 rounded-lg text-center">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleEmailLogin} className="space-y-4">
+            <div>
+              <input
+                type="email"
+                placeholder="Correo electrónico"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input"
+                required
+              />
+            </div>
+            <div>
+              <input
+                type="password"
+                placeholder="Contraseña"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full btn-primary text-white flex justify-center items-center py-3"
+            >
+              {isSubmitting ? 'Iniciando...' : 'Iniciar sesión'}
+            </button>
+          </form>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 text-text-secondary glass-surface rounded-full py-1 text-xs">
+                O continuar con
+              </span>
+            </div>
+          </div>
+
           <button
-            onClick={handleLogin}
-            className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-lg font-medium transition-all duration-200 bg-white text-gray-900 hover:bg-gray-100 hover:scale-[1.02]"
+            onClick={handleGoogleLogin}
+            type="button"
+            className="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-lg font-medium transition-all duration-200 bg-white text-gray-900 hover:bg-gray-100 hover:scale-[1.02] shadow-lg"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -61,30 +138,12 @@ export default function LoginPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Iniciar sesión con Google
+            Google
           </button>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-surface text-text-secondary">
-                Accede para explorar antologías de video IA
-              </span>
-            </div>
-          </div>
-
-          <p className="text-center text-text-secondary text-xs">
+          <p className="text-center text-text-secondary text-xs pt-4">
             Al iniciar sesión, aceptas nuestros términos de servicio y política de privacidad.
           </p>
-        </div>
-
-        <div className="mt-8 pt-6 border-t border-border">
-          <div className="flex items-center justify-center gap-2 text-text-secondary text-xs">
-            <span>Plataforma estilo</span>
-            <span className="text-primary font-medium">Love, Death & Robots</span>
-          </div>
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 interface FetchOptions extends RequestInit {
-  params?: Record<string, string | number | boolean>;
+  params?: Record<string, string | number | boolean | undefined>;
 }
 
 class ApiClient {
@@ -19,7 +19,9 @@ class ApiClient {
     if (params) {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
-        searchParams.append(key, String(value));
+        if (value !== undefined) {
+          searchParams.append(key, String(value));
+        }
       });
       url += `?${searchParams.toString()}`;
     }
@@ -81,5 +83,6 @@ export const apiEndpoints = {
     callback: '/v1/auth/callback',
     logout: '/v1/auth/logout',
     me: '/v1/auth/me',
+    login: '/v1/auth/login',
   },
 };
